@@ -1,16 +1,13 @@
 # snl
 snl grammar analyzer
 
-全部都在 [main.cpp](https://github.com/code4lala/snl/blob/master/main.cpp) 里面了。
+编译原理课设
 
-所有的非终极符，终极符，列了出来。
+采用LL(1)分析法的snl词法语法分析器。
 
-所有的推导式，列了出来。
+封装成了一个C++类SnlGrammarAnalyser，包含头文件之后就可以用了。
 
-求解First集，Follow集，Predict集，几个函数。
-
-采用LL(1)分析法分析的，也是个函数。
-
-要是跑起来输出有error试试改一下main函数中的打开文件的文件路径，我在CLion中是这个相对路径，其他环境可能不是。
-
-[examples文件夹](https://github.com/code4lala/snl/tree/master/examples)中的几个测试样例都能通过。
+三个公开函数
+- 一个`void init()`进行初始化，求解First、Follow和Predict集。
+- 一个`int parse(const char *code)`解析给定的代码，返回值0为分析成功，非0为出错。
+- 如果出错了可以调用`string getError()`查看出错信息。（一共只有4种错误，详见[代码](https://github.com/code4lala/snl/blob/master/SnlGrammarAnalyser.h))
