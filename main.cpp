@@ -10,32 +10,31 @@ using namespace std;
  * @return 输入流读入的所有内容
  */
 string convertStreamToString(ifstream &in) {
-	string r, x;
-	while (getline(in, x)) {
-		r += x;
-		r += '\n';
-	}
-	return r;
+    string r, x;
+    while (getline(in, x)) {
+        r += x;
+        r += '\n';
+    }
+    return r;
 }
 
 int main() {
-	SnlGrammarAnalyser analyser;
+    SnlGrammarAnalyser analyser;
 
-	analyser.init();
+    analyser.init();
 
-	for (int i = 1; i <= 8; i++) {
-		ifstream in;
-		in.open("../examples/C" + to_string(i) + ".TXT", ios::in);
-		string x = convertStreamToString(in);
-		in.close();
+    for (int i = 1; i <= 8; i++) {
+        ifstream in;
+        in.open("../examples/C" + to_string(i) + ".TXT", ios::in);
+        string x = convertStreamToString(in);
+        in.close();
 
-		if (analyser.parse(x.c_str()) == 0) {
-			cout << i << " 词法检查通过! 语法检查通过!" << endl << endl;
-		}
-		else {
-			cerr << i << " " << analyser.getError() << endl << endl;
-		}
-	}
+        if (analyser.parse(x.c_str()) == 0) {
+            cout << i << " 词法检查通过! 语法检查通过!" << endl << endl;
+        } else {
+            cerr << i << " " << analyser.getError() << endl << endl;
+        }
+    }
 
-	return 0;
+    return 0;
 }
