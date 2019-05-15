@@ -2,7 +2,10 @@
 >snl grammar analyzer  
 >采用LL(1)分析法的snl词法语法分析器。
 
-封装成了一个C++类SnlGrammarAnalyser，包含头文件之后就可以用了。
+## 说明
+
+封装成了一个C++类SnlGrammarAnalyser，包含头文件之后就可以用了。  
+main函数中打开示例代码是用的相对路径，如果你运行时候发现路径不一样的话请自行修正。  
 
 ## 公开函数
 
@@ -43,8 +46,9 @@ string getTree()
 [Graphviz Online](https://dreampuf.github.io/GraphvizOnline/)
 这样的网站上在线生成图片。
 
----
-
-main函数中打开示例代码是用的相对路径，如果你运行时候发现路径不一样的话请自行修正。
+## 致谢
 
 snl示例代码来自[SNL-Compiler项目](https://github.com/YouthLin/SNL-Compiler)中的随书光盘。
+
+## 协议
+[The GNU General Public License v3.0](https://github.com/code4lala/snl/blob/master/LICENSE)
