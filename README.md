@@ -6,7 +6,6 @@
 
 ## 公开函数
 
----
 ```cpp
 static void init()
 ```
@@ -43,6 +42,8 @@ string getTree()
 得到的语法树可以在类似
 [Graphviz Online](https://dreampuf.github.io/GraphvizOnline/)
 这样的网站上在线生成图片。
+
+---
 
 main函数中打开示例代码是用的相对路径，如果你运行时候发现路径不一样的话请自行修正。
 
