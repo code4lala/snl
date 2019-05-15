@@ -19,9 +19,8 @@ string convertStreamToString(ifstream &in) {
 }
 
 int main() {
+    SnlGrammarAnalyser::init();
     SnlGrammarAnalyser analyser;
-
-    analyser.init();
 
     for (int i = 1; i <= 8; i++) {
         ifstream in;
@@ -31,6 +30,8 @@ int main() {
 
         if (analyser.parse(x.c_str()) == 0) {
             cout << i << " 词法检查通过! 语法检查通过!" << endl << endl;
+            cout << "语法树的DOT Language描述如下:" << endl << endl;
+            cout << analyser.getTree() << endl << endl;
         } else {
             cerr << i << " " << analyser.getError() << endl << endl;
         }

@@ -3,4 +3,4 @@ project(snl)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(snl main.cpp SnlGrammarAnalyser.h)
+add_executable(snl main.cpp SnlGrammarAnalyser.h SnlGrammarAnalyser.cpp)
