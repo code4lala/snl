@@ -1,9 +1,26 @@
 #include "SnlGrammarAnalyser.h"
 
 using namespace snl;
+using std::numeric_limits;
+using std::transform;
+using std::cout;
+using std::pair;
+using std::set;
+using std::map;
+using std::vector;
+using std::endl;
+using std::string;
+using std::ostream;
+using std::setw;
+using std::list;
+using std::cerr;
+using std::to_string;
+using std::ofstream;
+using std::stringstream;
+using std::queue;
 
 int snl::global_line_number = 1;
-char snl::buf[4096] = {0 };
+char snl::buf[4096] = {0};
 bool snl::initialized = false;
 
 // 终极符 空串
@@ -930,4 +947,593 @@ string snl::up(const string &x) {
     string y = x;
     transform(y.begin(), y.end(), y.begin(), ::toupper);
     return y;
+}
+
+vector<TokenSymbol> snl::SnlGrammarAnalyser::getTokenList() {
+    return tokenSymbols;
+}
+
+void snl::SnlGrammarAnalyser::init() {
+    if (initialized)return;
+    buildInit();
+    buildFirst();
+    buildFollow();
+    buildPredict();
+    initialized = true;
+}
+
+int snl::SnlGrammarAnalyser::parse(const char *code) {
+    if (!initialized)return -1;
+    // 清空之前的
+    words.clear();
+    tokenSymbols.clear();
+    vTree.clear();
+    errMsg = "";
+    // 先进行词法分析
+    global_line_number = 1;
+    while (*code != '\0') {
+        int r = analysisOneWord(code);
+        if (r <= 0) {
+            errMsg = "[Lexical error] line " + to_string(global_line_number) + " Current parsing \'" + *code +
+                     "\'";
+            // 出错
+            switch (r) {
+                case ERROR_COMMENT:
+                    errMsg += "Missing a right brace causes the comment to not close";
+                    return E_COMMENT_NOT_TERMINATED;
+                case ERROR_TWO_CHAR:
+                    errMsg += "There should be an equal sign after the colon but no";
+                    return E_ONLY_COLON_BUT_NO_EQUAL;
+                case ERROR_UNEXPECTED_CHAR:
+                    errMsg += "Encountered symbols other than snl grammar";
+                    return E_UNEXPECTED_CHAR;
+                default:
+                    errMsg += "Unknown error";
+                    return E_UNKNOWN;
+            }
+        } else {
+            code += r;
+        }
+    }
+
+    convertWordsToSymbols();
+
+    // 然后进行语法分析
+    return grammarAnalysis();
+}
+
+Word::Word(string s, int i) : type(i), v(std::move(s)), line(global_line_number) {}
+
+string Word::getType(int i) {
+    switch (i) {
+        case TYPE_IDENTIFIER:
+            return "___ID___";
+        case TYPE_UNSIGNED_INT:
+            return "UNSIGNED";
+        case TYPE_SINGLE_CHAR:
+            return "ONE_CHAR";
+        case TYPE_EQUAL:
+            return "__EQUAL_";
+        case TYPE_COMMENT:
+            return "COMMENT_";
+        case TYPE_ARRAY:
+            return "__ARRAY_";
+        case TYPE_WHITESPACE:
+            return "__WHITE_";
+        default:
+            return "UNKNOWN_";
+    }
+}
+
+ostream &snl::operator<<(ostream &os, const Word &word) {
+    os << "[" << word.getType(word.type) << "]" << setw(4) << word.line << "{" << word.v << "}";
+    return os;
+}
+
+Symbol::Symbol(string name, bool terminate) : name(std::move(name)), terminate(terminate), v("") {}
+
+Symbol::Symbol(string name, bool terminate, string v) : name(std::move(name)), terminate(terminate),
+                                                        v(std::move(v)) {}
+
+ostream &snl::operator<<(ostream &os, const Symbol &symbol) {
+    os << setw(10) << symbol.name << " " << (symbol.terminate ? "T" : "N");
+    if (symbol.v != symbol.name)
+        os << " " << setw(10) << symbol.v;
+    return os;
+}
+
+bool Symbol::operator==(const Symbol &rhs) const {
+    return name == rhs.name &&
+           terminate == rhs.terminate &&
+           v == rhs.v;
+}
+
+bool Symbol::operator!=(const Symbol &rhs) const {
+    return !(rhs == *this);
+}
+
+bool Symbol::operator<(const Symbol &rhs) const {
+    return name < rhs.name;
+}
+
+bool Symbol::operator>(const Symbol &rhs) const {
+    return rhs < *this;
+}
+
+bool Symbol::operator<=(const Symbol &rhs) const {
+    return !(rhs < *this);
+}
+
+bool Symbol::operator>=(const Symbol &rhs) const {
+    return !(*this < rhs);
+}
+
+Derivation::Derivation(Symbol head, vector<Symbol> symbolVector) : head(std::move(head)),
+                                                                   symbolVector(std::move(symbolVector)) {}
+
+bool Derivation::operator==(const Derivation &rhs) const {
+    return head == rhs.head &&
+           symbolVector == rhs.symbolVector;
+}
+
+bool Derivation::operator!=(const Derivation &rhs) const {
+    return !(rhs == *this);
+}
+
+ostream &snl::operator<<(ostream &os, const Derivation &derivation) {
+    os << "[" << derivation.head.name << "] -> [ ";
+    for (const Symbol &s : derivation.symbolVector) {
+        os << s.name << " ";
+    }
+    os << "]";
+    return os;
+}
+
+bool Derivation::operator<(const Derivation &rhs) const {
+    if (head < rhs.head)
+        return true;
+    if (rhs.head < head)
+        return false;
+    return symbolVector < rhs.symbolVector;
+}
+
+bool Derivation::operator>(const Derivation &rhs) const {
+    return rhs < *this;
+}
+
+bool Derivation::operator<=(const Derivation &rhs) const {
+    return !(rhs < *this);
+}
+
+bool Derivation::operator>=(const Derivation &rhs) const {
+    return !(*this < rhs);
+}
+
+TokenSymbol::TokenSymbol(Symbol s, int line) : s(std::move(s)), line(line) {}
+
+ostream &snl::operator<<(ostream &os, const TokenSymbol &symbol) {
+    os << setw(4) << symbol.line << symbol.s;
+    return os;
+}
+
+Node::Node(Symbol s, Node *parent, int id) : curr(std::move(s)), parent(parent), id(id) {}
+
+string snl::SnlGrammarAnalyser::getError() { return errMsg; }
+
+string snl::SnlGrammarAnalyser::getTree() {
+    if (!initialized)return "";
+    if (!errMsg.empty())return "";
+    if (vTree.empty())return "";
+
+    ////DEBUG 输出所有已知顺序的推导式
+    //cout << "DEBUG 所有推导式" << endl;
+    //for (const Derivation& d : vTree) {
+    //	cout << d << endl;
+    //}
+    //cout << "DEBUG 所有推导式" << endl;
+
+    global_id = 1;
+
+    root = new Node(vTree[0].head, nullptr, global_id++);
+    for (const Symbol &s : vTree[0].symbolVector) {
+        root->children.emplace_back(new Node(s, root, global_id++));
+    }
+    treeIndex = 1;
+    global_token_index = 0;
+    for (auto &i : root->children) {
+        if (i->curr.terminate)continue;
+        dfsBuildTree(i);
+    }
+
+    stringstream ss;//把DOT Language表示的语法树的字符串放到这里边
+
+    ss.clear();
+    ss << "digraph GrammarTree {" << endl;
+    queue<Node *> q;
+    q.push(root);
+    while (!q.empty()) {
+        Node *c = q.front();
+        q.pop();
+
+        // 该节点的样式和内容
+        if (c->curr.terminate) {
+            if (c->curr == Epsilon()) {
+                ss << "\"" << c->id << "\" [shape=square; style=filled; fillcolor=cornsilk; label=\""
+                   << "ε" << "\"];" << endl;
+            } else if (c->curr.name == "ID") {
+                ss << "\"" << c->id << "\" [shape=square; style=filled; fillcolor=lightpink; label=\""
+                   << c->curr.v << "\"];" << endl;
+            } else {
+                ss << "\"" << c->id << "\" [shape=square; style=filled; fillcolor=chartreuse1; label=\""
+                   << c->curr.v << "\"];" << endl;
+            }
+        } else {
+            ss << "\"" << c->id << "\" [style=filled; fillcolor=cyan; label=\""
+               << c->curr.name << "\"];" << endl;
+        }
+
+        if (c->children.empty()) {
+            // 叶子结点
+            continue;
+        }
+
+        // 跟其他节点的关系
+        string children;
+        for (auto &i : c->children) {
+            children += "\"" + to_string(i->id) + "\"; "; // "id; "
+        }
+        ss << "\"" << c->id << "\" -> {" << children << "}" << endl;
+        ss << "{rank=same; " << children << "}" << endl;
+
+        // 入栈
+        for (Node *nd : c->children) {
+            q.push(nd);
+        }
+    }
+    ss << "}" << endl;
+    return ss.str();
+}
+
+void snl::SnlGrammarAnalyser::dfsBuildTree(Node *&parent) {
+    // 传过来的参数parent一定是非终极符
+    if (parent->curr.terminate) {
+        cerr << "[error] dfsBuildTree invalid param" << endl;
+        exit(-1);
+    }
+    if (treeIndex >= vTree.size()) {
+        cerr << "[error] dfsBuildTree treeIndex" << endl;
+        exit(-1);
+    }
+    // 构造子节点
+    for (const auto &i : vTree[treeIndex].symbolVector) {
+        parent->children.emplace_back(new Node(i, parent, global_id++));
+    }
+    // 构造完推导式下标就加加
+    treeIndex++;
+    for (auto &i : parent->children) {
+        if (i->curr.terminate) {
+            // 将ID转化为实际值
+            if (i->curr == Epsilon()) {}
+            else {
+                //cout << tokenSymbols[global_token_index] <<"\t\ttokenlist"<< endl;
+                //cout << parent->children[i]->curr << endl;
+                //cout << endl;
+                i->curr.v = tokenSymbols[global_token_index].s.v;
+                global_token_index++;
+            }
+            continue;// 终极符是叶节点
+        }
+        dfsBuildTree(i);
+    }
+}
+
+int snl::SnlGrammarAnalyser::grammarAnalysis() {
+    // 例 分析栈 #E   输入流 i+i*i#
+    list<Symbol> s;//因为栈不能遍历输出所以用list链表代替
+    s.emplace_back(Sharp()); // #
+    s.emplace_back(allDerivations.front().head); // 文法开始符
+    tokenSymbols.emplace_back(TokenSymbol(Sharp(), numeric_limits<int>::max()));
+    int i = 0;//输入流索引
+    while (!s.empty()) {
+        Symbol t = s.back();//栈顶元素
+        Symbol r = tokenSymbols[static_cast<unsigned int>(i)].s;//输入流当前扫描符号
+        if (!t.terminate) {
+            //非终极符 寻找 t->啥 的Predict集 中有输入流当前索引符号
+            bool notFound = true;
+            for (const auto &a : PredictSet) {
+                if (a.first.head != t)continue;
+                set<Symbol>::iterator f;
+                if (r.name == "ID") {
+                    f = a.second.find(ID());
+                } else {
+                    f = a.second.find(r);
+                }
+                if (f == a.second.end())continue;
+                // 找到了 t->a.second的Predict集中有 r
+
+                // 绘制语法树部分
+                vTree.emplace_back(a.first);
+
+                notFound = false;
+                s.pop_back();//先弹栈
+                // 然后推导式倒着入栈
+                for (auto it = a.first.symbolVector.rbegin(); it != a.first.symbolVector.rend(); it++) {
+                    s.emplace_back(*it);
+                }
+                break;
+            }
+            if (notFound) {
+                // 出错
+                errMsg = "[Grammatical error] line " +
+                         to_string(tokenSymbols[static_cast<unsigned int>(i)].line) + " Current parsing \'" +
+                         r.v + "\'";
+                return E_GRAMMAR;
+                //cerr << "[error] " << __LINE__ << " " << t << " can not predict " << r << endl;
+                //cerr << "at line " << tokenSymbols[i].line << endl;
+                //exit(-1);
+            } else {
+                continue;// 继续
+            }
+        } else {
+            if (t.name == "ID") {
+                // 非关键字的标识符
+                if (r.name == "ID") {
+                    // 匹配了!!!
+                    s.pop_back();
+                    i++;
+                    continue;
+                } else {
+                    errMsg = "[Grammatical error] line " +
+                             to_string(tokenSymbols[static_cast<unsigned int>(i)].line) +
+                             " Current parsing \'" + r.v + "\'";
+                    return E_GRAMMAR;
+                    // 出错
+                    //cerr << "[error] " << __LINE__ << " Top of stack is " << t << " but head of queue is " << r
+                    //	<< endl;
+                    //cerr << "at line " << tokenSymbols[i].line << endl;
+                    //exit(-1);
+                }
+            } else if (t == Epsilon()) {
+                // 空串，直接弹栈继续
+                s.pop_back();
+                continue;
+            } else if (t.name == "INTC") {
+                // 无符号整数
+                if (r.name == "INTC") {
+                    // 匹配了!!!
+                    s.pop_back();
+                    i++;
+                    continue;
+                } else {
+                    errMsg = "[Grammatical error] line " +
+                             to_string(tokenSymbols[static_cast<unsigned int>(i)].line) +
+                             " Current parsing \'" + r.v + "\'";
+                    return E_GRAMMAR;
+                    // 出错
+                    //cerr << "[error] " << __LINE__ << " Top of stack is " << t << " but head of queue is " << r
+                    //	<< endl;
+                    //cerr << "at line " << tokenSymbols[i].line << endl;
+                    //exit(-1);
+                }
+
+            } else {
+                // 单独的
+                if (t == r) {
+                    // 匹配了!!!
+                    if (t == Sharp()) {
+                        // 完成了!!!
+                        break;
+                    }
+                    s.pop_back();
+                    i++;
+                    continue;
+                } else {
+                    // 出错
+                    errMsg = "[Grammatical error] line " +
+                             to_string(tokenSymbols[static_cast<unsigned int>(i)].line) +
+                             " Current parsing \'" + r.v + "\'";
+                    return E_GRAMMAR;
+                    //cerr << "[error] " << __LINE__ << " Top of stack is " << t << " but head of queue is " << r
+                    //	<< endl;
+                    //cerr << "at line " << tokenSymbols[i].line << endl;
+                    //exit(-1);
+                }
+            }
+        }
+    }
+    //cout << endl << "Grammar analysis completed! 0 error!" << endl;
+    return 0;
+}
+
+void snl::SnlGrammarAnalyser::pushWord(const char *s, int l, int type) {
+    strncpy(buf, s, static_cast<unsigned int>(l));
+    buf[l] = '\0';
+    words.emplace_back(Word(buf, type));
+}
+
+int snl::SnlGrammarAnalyser::takeIdentifier(const char *s) {
+    int i = 1;
+    while (s[i] != '\0') {
+        if ((s[i] >= 'a' && s[i] <= 'z') ||
+            (s[i] >= 'A' && s[i] <= 'Z') ||
+            (s[i] >= '0' && s[i] <= '9')) {
+            i++;
+        } else {
+            break;
+        }
+    }
+    pushWord(s, i, TYPE_IDENTIFIER);
+    return i;
+}
+
+int snl::SnlGrammarAnalyser::takeNum(const char *s) {
+    int i = 1;
+    while (s[i] != '\0') {
+        if (s[i] >= '0' && s[i] <= '9') {
+            i++;
+        } else {
+            break;
+        }
+    }
+    pushWord(s, i, TYPE_UNSIGNED_INT);
+    return i;
+}
+
+int snl::SnlGrammarAnalyser::takeOneChar(const char *s) {
+    pushWord(s, 1, TYPE_SINGLE_CHAR);
+    return 1;
+}
+
+int snl::SnlGrammarAnalyser::takeTwoChar(const char *s) {
+    if (s[1] == '=') {
+        pushWord(s, 2, TYPE_EQUAL);
+        return 2;
+    }
+    return ERROR_TWO_CHAR;
+}
+
+int snl::SnlGrammarAnalyser::takeComment(const char *s) {
+    int i = 1;
+    while (s[i] != '\0') {
+        if (s[i] == '\n')global_line_number++;
+        if (s[i] != '}')i++;
+        else {
+            pushWord(s, i + 1, TYPE_COMMENT);
+            return i + 1;
+        }
+    }
+    return ERROR_COMMENT;
+}
+
+int snl::SnlGrammarAnalyser::takeDot(const char *s) {
+    if (s[1] == '.') {
+        pushWord(s, 2, TYPE_ARRAY);
+        return 2;
+    }
+    pushWord(s, 1, TYPE_SINGLE_CHAR);
+    return 1;
+}
+
+int snl::SnlGrammarAnalyser::takeWhiteSpace(const char *s) {
+    if (s[0] == '\n')global_line_number++;
+    int i = 1;
+    while (s[i] != '\0') {
+        if (s[i] == '\n')global_line_number++;
+        if (s[i] == ' ' || s[i] == '\t' || s[i] == '\n') {
+            i++;
+        } else break;
+    }
+    pushWord(s, i, TYPE_WHITESPACE);
+    return i;
+}
+
+int snl::SnlGrammarAnalyser::analysisOneWord(const char *s) {
+    int c;
+    if ((s[0] >= 'a' && s[0] <= 'z') || (s[0] >= 'A' && s[0] <= 'Z')) {
+        // 字母打头			返回 大于等于1
+        c = takeIdentifier(s);
+    } else if (s[0] >= '0' && s[0] <= '9') {
+        // 数字打头			返回 大于等于1
+        c = takeNum(s);
+    } else if (
+            s[0] == '+' || s[0] == '-' || s[0] == '*' || s[0] == '/' ||
+            s[0] == '(' || s[0] == ')' || s[0] == '[' || s[0] == ']' ||
+            s[0] == ';' || s[0] == '<' || s[0] == '=' || s[0] == ','
+            ) {
+        // 单个字符			返回 大于等于1
+        c = takeOneChar(s);
+    } else if (s[0] == ':') {
+        // 双字符 :=			返回 2 或 错误
+        c = takeTwoChar(s);
+    } else if (s[0] == '{') {
+        // 注释				返回 大于等于2 或 错误
+        c = takeComment(s);
+    } else if (s[0] == '.') {
+        // 可能是单字符中的 .	返回 1 或 2
+        // 也可能是双字符中的数组下标界限符 ..
+        c = takeDot(s);
+    } else if (s[0] == ' ' || s[0] == '\t' || s[0] == '\n') {
+        // 空白符			返回 大于等于1
+        c = takeWhiteSpace(s);
+    } else {
+        return ERROR_UNEXPECTED_CHAR;
+    }
+    return c;
+}
+
+void snl::SnlGrammarAnalyser::convertWordsToSymbols() {
+    for (const Word &w : words) {
+        switch (w.type) {
+            // 忽略注释和空白符
+            case TYPE_COMMENT:
+            case TYPE_WHITESPACE:
+                continue;
+            case TYPE_ARRAY:
+                tokenSymbols.emplace_back(TokenSymbol(TwoDots(), w.line));
+                break;
+            case TYPE_SINGLE_CHAR:
+                tokenSymbols.emplace_back(TokenSymbol(Symbol(w.v, true, w.v), w.line));
+                break;
+            case TYPE_EQUAL:
+                tokenSymbols.emplace_back(TokenSymbol(ColonEqual(), w.line));
+                break;
+            case TYPE_UNSIGNED_INT:
+                tokenSymbols.emplace_back(TokenSymbol(Symbol("INTC", true, w.v), w.line));
+                break;
+            case TYPE_IDENTIFIER: {
+                string v = up(w.v);
+                int l = w.line;
+                auto b = [](const Symbol &s, int l, vector<TokenSymbol> &t) {
+                    t.emplace_back(s, l);
+                };
+                if (v == PROCEDURE().v) {
+                    b(PROCEDURE(), l, tokenSymbols);
+                } else if (v == PROGRAM().v) {
+                    b(PROGRAM(), l, tokenSymbols);
+                } else if (v == TYPE().v) {
+                    b(TYPE(), l, tokenSymbols);
+                } else if (v == CHAR().v) {
+                    b(CHAR(), l, tokenSymbols);
+                } else if (v == INTEGER().v) {
+                    b(INTEGER(), l, tokenSymbols);
+                } else if (v == ARRAY().v) {
+                    b(ARRAY(), l, tokenSymbols);
+                } else if (v == OF().v) {
+                    b(OF(), l, tokenSymbols);
+                } else if (v == RECORD().v) {
+                    b(RECORD(), l, tokenSymbols);
+                } else if (v == END().v) {
+                    b(END(), l, tokenSymbols);
+                } else if (v == VAR().v) {
+                    b(VAR(), l, tokenSymbols);
+                } else if (v == BEGIN().v) {
+                    b(BEGIN(), l, tokenSymbols);
+                } else if (v == IF().v) {
+                    b(IF(), l, tokenSymbols);
+                } else if (v == THEN().v) {
+                    b(THEN(), l, tokenSymbols);
+                } else if (v == ELSE().v) {
+                    b(ELSE(), l, tokenSymbols);
+                } else if (v == FI().v) {
+                    b(FI(), l, tokenSymbols);
+                } else if (v == WHILE().v) {
+                    b(WHILE(), l, tokenSymbols);
+                } else if (v == DO().v) {
+                    b(DO(), l, tokenSymbols);
+                } else if (v == ENDWH().v) {
+                    b(ENDWH(), l, tokenSymbols);
+                } else if (v == READ().v) {
+                    b(READ(), l, tokenSymbols);
+                } else if (v == WRITE().v) {
+                    b(WRITE(), l, tokenSymbols);
+                } else if (v == RETURN().v) {
+                    b(RETURN(), l, tokenSymbols);
+                } else {
+                    // 不是关键字 不转换成大写
+                    b(Symbol("ID", true, w.v), l, tokenSymbols);
+                }
+                break;
+            }
+        }
+    }
 }
