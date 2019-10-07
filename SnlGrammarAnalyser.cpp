@@ -25,10 +25,13 @@ bool snl::initialized = false;
 
 // 终极符 空串
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCDFAInspection"
 Symbol &snl::Epsilon() {
     static Symbol Epsilon("Epsilon", true, "");
     return Epsilon;
 }
+#pragma clang diagnostic pop
 
 
 // 终极符 单字符分界符
@@ -949,10 +952,6 @@ string snl::up(const string &x) {
     return y;
 }
 
-vector<TokenSymbol> snl::SnlGrammarAnalyser::getTokenList() {
-    return tokenSymbols;
-}
-
 void snl::SnlGrammarAnalyser::init() {
     if (initialized)return;
     buildInit();
@@ -1119,6 +1118,13 @@ ostream &snl::operator<<(ostream &os, const TokenSymbol &symbol) {
 Node::Node(Symbol s, Node *parent, int id) : curr(std::move(s)), parent(parent), id(id) {}
 
 string snl::SnlGrammarAnalyser::getError() { return errMsg; }
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+vector<TokenSymbol> snl::SnlGrammarAnalyser::getTokenList(){
+    return tokenSymbols;
+}
+#pragma clang diagnostic pop
 
 string snl::SnlGrammarAnalyser::getTree() {
     if (!initialized)return "";

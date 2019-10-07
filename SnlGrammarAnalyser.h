@@ -304,7 +304,10 @@ namespace snl {
         static void init();
         int parse(const char *code);
         string getError();
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
         vector<TokenSymbol> getTokenList();
+#pragma clang diagnostic pop
         string getTree();
 
     private:
