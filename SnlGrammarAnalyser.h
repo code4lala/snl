@@ -19,7 +19,7 @@
 #include <sstream>
 #include <queue>
 
-namespace ____NamespaceSnlGrammarAnalyser {
+namespace snl {
 
 #if _MSC_VER >= 1910
 #define strncpy(a,b,c) strncpy_s(a,b,c)
@@ -157,119 +157,118 @@ namespace ____NamespaceSnlGrammarAnalyser {
         }
     };
 
-    extern Symbol
     // 终极符 空串
-            Epsilon,
+    Symbol& Epsilon();
 
     // 终极符 单字符分界符
-            Plus,//加号 +
-            Sub,//减号 -
-            Mul,//乘号 *
-            Div,//除号 /
-            LessThan,//小于号 <
-            Equal,// 等于 =
-            LeftParenthesis, // 左小括号 (
-            RightParenthesis, // 右小括号 )
-            LeftBracket,//左中括号 [
-            RightBracket,//右中括号 ]
-            Dot,//单字符分界符 . 一个点 用于结构体
-            Semicolon,// 分号 ;
-            Comma,// 逗号 ,
+    Symbol& Plus();//加号 +
+    Symbol& Sub();//减号 -
+    Symbol& Mul();//乘号 *
+    Symbol& Div();//除号 /
+    Symbol& LessThan();//小于号 <
+    Symbol& Equal();// 等于 =
+    Symbol& LeftParenthesis(); // 左小括号 (
+    Symbol& RightParenthesis(); // 右小括号 )
+    Symbol& LeftBracket();//左中括号 [
+    Symbol& RightBracket();//右中括号 ]
+    Symbol& Dot();//单字符分界符 . 一个点 用于结构体
+    Symbol& Semicolon();// 分号 ;
+    Symbol& Comma();// 逗号 ,
 
     // 终极符 双字符分界符
-            TwoDots,//数组下标分隔符 两个点 ..
-            ColonEqual,// 赋值符号 :=
+    Symbol& TwoDots();//数组下标分隔符 两个点 ..
+    Symbol& ColonEqual();// 赋值符号 :=
 
     // 终极符 #
-            Sharp,//不出现在First集中，出现在Follow集和Predict集中
+    Symbol& Sharp();//不出现在First集中，出现在Follow集和Predict集中
 
     // 终极符 关键字
-            ID,
-            PROCEDURE,// keyword procedure
-            PROGRAM, // keyword program
-            TYPE, // keyword type
-            CHAR,// keyword char
-            INTEGER,// keyword integer
-            ARRAY,// keyword array
-            OF,// keyword of
-            INTC,// keyword intc
-            RECORD,// keyword record
-            END,// keyword end
-            VAR,// keyword var
-            BEGIN, // keyword begin
-            IF,// keyword if
-            THEN,// keyword then
-            ELSE,// keyword else
-            FI,// keyword fi
-            WHILE,//keyword while
-            DO,// keyword do
-            ENDWH,//keyword endwh
-            READ,//keyword read
-            WRITE,//keyword write
-            RETURN,//keyword return
+    Symbol& ID();
+    Symbol& PROCEDURE();// keyword procedure
+    Symbol& PROGRAM(); // keyword program
+    Symbol& TYPE(); // keyword type
+    Symbol& CHAR();// keyword char
+    Symbol& INTEGER();// keyword integer
+    Symbol& ARRAY();// keyword array
+    Symbol& OF();// keyword of
+    Symbol& INTC();// keyword intc
+    Symbol& RECORD();// keyword record
+    Symbol& END();// keyword end
+    Symbol& VAR();// keyword var
+    Symbol& BEGIN(); // keyword begin
+    Symbol& IF();// keyword if
+    Symbol& THEN();// keyword then
+    Symbol& ELSE();// keyword else
+    Symbol& FI();// keyword fi
+    Symbol& WHILE();//keyword while
+    Symbol& DO();// keyword do
+    Symbol& ENDWH();//keyword endwh
+    Symbol& READ();//keyword read
+    Symbol& WRITE();//keyword write
+    Symbol& RETURN();//keyword return
 
     // 非终极符
-            Program,
-            ProgramHead,
-            DeclarePart,
-            ProgramBody,
-            ProcDecPart,
-            TypeDec,
-            TypeDecList,
-            TypeId,
-            TypeName,
-            TypeDecMore,
-            BaseType,
-            StructureType,
-            ArrayType,
-            RecType,
-            FieldDecList,
-            IdList,
-            FieldDecMore,
-            IdMore,
-            VarDec,
-            VarDecList,
-            VarIdList,
-            VarDecMore,
-            VarIdMore,
-            ProcDec,
-            ParamList,
-            ProcBody,
-            ProcDeclaration,
-            ParamDecList,
-            Param,
-            ParamMore,
-            FormList,
-            FidMore,
-            StmList,
-            Stm,
-            StmMore,
-            ConditionalStm,
-            LoopStm,
-            InputStm,
-            OutputStm,
-            ReturnStm,
-            AssCall,
-            AssignmentRest,
-            CallStmRest,
-            VariMore,
-            Exp,
-            ActParamList,
-            ActParamMore,
-            OtherExp,
-            CmpOp,
-            Term,
-            OtherTerm,
-            AddOp,
-            Factor,
-            OtherFactor,
-            MultOp,
-            Variable,
-            FieldVar,
-            FieldVarMore,
-            TypeDeclaration,
-            VarDeclaration,
-            SimpleExp;
+    Symbol& Program();
+    Symbol& ProgramHead();
+    Symbol& DeclarePart();
+    Symbol& ProgramBody();
+    Symbol& ProcDecPart();
+    Symbol& TypeDec();
+    Symbol& TypeDecList();
+    Symbol& TypeId();
+    Symbol& TypeName();
+    Symbol& TypeDecMore();
+    Symbol& BaseType();
+    Symbol& StructureType();
+    Symbol& ArrayType();
+    Symbol& RecType();
+    Symbol& FieldDecList();
+    Symbol& IdList();
+    Symbol& FieldDecMore();
+    Symbol& IdMore();
+    Symbol& VarDec();
+    Symbol& VarDecList();
+    Symbol& VarIdList();
+    Symbol& VarDecMore();
+    Symbol& VarIdMore();
+    Symbol& ProcDec();
+    Symbol& ParamList();
+    Symbol& ProcBody();
+    Symbol& ProcDeclaration();
+    Symbol& ParamDecList();
+    Symbol& Param();
+    Symbol& ParamMore();
+    Symbol& FormList();
+    Symbol& FidMore();
+    Symbol& StmList();
+    Symbol& Stm();
+    Symbol& StmMore();
+    Symbol& ConditionalStm();
+    Symbol& LoopStm();
+    Symbol& InputStm();
+    Symbol& OutputStm();
+    Symbol& ReturnStm();
+    Symbol& AssCall();
+    Symbol& AssignmentRest();
+    Symbol& CallStmRest();
+    Symbol& VariMore();
+    Symbol& Exp();
+    Symbol& ActParamList();
+    Symbol& ActParamMore();
+    Symbol& OtherExp();
+    Symbol& CmpOp();
+    Symbol& Term();
+    Symbol& OtherTerm();
+    Symbol& AddOp();
+    Symbol& Factor();
+    Symbol& OtherFactor();
+    Symbol& MultOp();
+    Symbol& Variable();
+    Symbol& FieldVar();
+    Symbol& FieldVarMore();
+    Symbol& TypeDeclaration();
+    Symbol& VarDeclaration();
+    Symbol& SimpleExp();
 
     extern char buf[4096];
 
@@ -475,7 +474,7 @@ namespace ____NamespaceSnlGrammarAnalyser {
 
                 // 该节点的样式和内容
                 if (c->curr.terminate) {
-                    if (c->curr == Epsilon) {
+                    if (c->curr == Epsilon()) {
                         ss << "\"" << c->id << "\" [shape=square; style=filled; fillcolor=cornsilk; label=\""
                            << "ε" << "\"];" << endl;
                     } else if (c->curr.name == "ID") {
@@ -540,7 +539,7 @@ namespace ____NamespaceSnlGrammarAnalyser {
             for (unsigned int i = 0; i < parent->children.size(); i++) {
                 if (parent->children[i]->curr.terminate) {
                     // 将ID转化为实际值
-                    if (parent->children[i]->curr == Epsilon) {}
+                    if (parent->children[i]->curr == Epsilon()) {}
                     else {
                         //cout << tokenSymbols[global_token_index] <<"\t\ttokenlist"<< endl;
                         //cout << parent->children[i]->curr << endl;
@@ -560,9 +559,9 @@ namespace ____NamespaceSnlGrammarAnalyser {
         int grammarAnalysis() {
             // 例 分析栈 #E   输入流 i+i*i#
             list<Symbol> s;//因为栈不能遍历输出所以用list链表代替
-            s.emplace_back(Sharp); // #
+            s.emplace_back(Sharp()); // #
             s.emplace_back(allDerivations.front().head); // 文法开始符
-            tokenSymbols.emplace_back(TokenSymbol(Sharp, numeric_limits<int>::max()));
+            tokenSymbols.emplace_back(TokenSymbol(Sharp(), numeric_limits<int>::max()));
             int i = 0;//输入流索引
             while (!s.empty()) {
                 Symbol t = s.back();//栈顶元素
@@ -574,7 +573,7 @@ namespace ____NamespaceSnlGrammarAnalyser {
                         if (a.first.head != t)continue;
                         set<Symbol>::iterator f;
                         if (r.name == "ID") {
-                            f = a.second.find(ID);
+                            f = a.second.find(ID());
                         } else {
                             f = a.second.find(r);
                         }
@@ -623,7 +622,7 @@ namespace ____NamespaceSnlGrammarAnalyser {
                             //cerr << "at line " << tokenSymbols[i].line << endl;
                             //exit(-1);
                         }
-                    } else if (t == Epsilon) {
+                    } else if (t == Epsilon()) {
                         // 空串，直接弹栈继续
                         s.pop_back();
                         continue;
@@ -650,7 +649,7 @@ namespace ____NamespaceSnlGrammarAnalyser {
                         // 单独的
                         if (t == r) {
                             // 匹配了!!!
-                            if (t == Sharp) {
+                            if (t == Sharp()) {
                                 // 完成了!!!
                                 break;
                             }
@@ -839,13 +838,13 @@ namespace ____NamespaceSnlGrammarAnalyser {
                     case TYPE_WHITESPACE:
                         continue;
                     case TYPE_ARRAY:
-                        tokenSymbols.emplace_back(TokenSymbol(TwoDots, w.line));
+                        tokenSymbols.emplace_back(TokenSymbol(TwoDots(), w.line));
                         break;
                     case TYPE_SINGLE_CHAR:
                         tokenSymbols.emplace_back(TokenSymbol(Symbol(w.v, true, w.v), w.line));
                         break;
                     case TYPE_EQUAL:
-                        tokenSymbols.emplace_back(TokenSymbol(ColonEqual, w.line));
+                        tokenSymbols.emplace_back(TokenSymbol(ColonEqual(), w.line));
                         break;
                     case TYPE_UNSIGNED_INT:
                         tokenSymbols.emplace_back(TokenSymbol(Symbol("INTC", true, w.v), w.line));
@@ -856,48 +855,48 @@ namespace ____NamespaceSnlGrammarAnalyser {
                         auto b = [](Symbol s, int l, vector<TokenSymbol> &t) {
                             t.emplace_back(s, l);
                         };
-                        if (v == PROCEDURE.v) {
-                            b(PROCEDURE, l, tokenSymbols);
-                        } else if (v == PROGRAM.v) {
-                            b(PROGRAM, l, tokenSymbols);
-                        } else if (v == TYPE.v) {
-                            b(TYPE, l, tokenSymbols);
-                        } else if (v == CHAR.v) {
-                            b(CHAR, l, tokenSymbols);
-                        } else if (v == INTEGER.v) {
-                            b(INTEGER, l, tokenSymbols);
-                        } else if (v == ARRAY.v) {
-                            b(ARRAY, l, tokenSymbols);
-                        } else if (v == OF.v) {
-                            b(OF, l, tokenSymbols);
-                        } else if (v == RECORD.v) {
-                            b(RECORD, l, tokenSymbols);
-                        } else if (v == END.v) {
-                            b(END, l, tokenSymbols);
-                        } else if (v == VAR.v) {
-                            b(VAR, l, tokenSymbols);
-                        } else if (v == BEGIN.v) {
-                            b(BEGIN, l, tokenSymbols);
-                        } else if (v == IF.v) {
-                            b(IF, l, tokenSymbols);
-                        } else if (v == THEN.v) {
-                            b(THEN, l, tokenSymbols);
-                        } else if (v == ELSE.v) {
-                            b(ELSE, l, tokenSymbols);
-                        } else if (v == FI.v) {
-                            b(FI, l, tokenSymbols);
-                        } else if (v == WHILE.v) {
-                            b(WHILE, l, tokenSymbols);
-                        } else if (v == DO.v) {
-                            b(DO, l, tokenSymbols);
-                        } else if (v == ENDWH.v) {
-                            b(ENDWH, l, tokenSymbols);
-                        } else if (v == READ.v) {
-                            b(READ, l, tokenSymbols);
-                        } else if (v == WRITE.v) {
-                            b(WRITE, l, tokenSymbols);
-                        } else if (v == RETURN.v) {
-                            b(RETURN, l, tokenSymbols);
+                        if (v == PROCEDURE().v) {
+                            b(PROCEDURE(), l, tokenSymbols);
+                        } else if (v == PROGRAM().v) {
+                            b(PROGRAM(), l, tokenSymbols);
+                        } else if (v == TYPE().v) {
+                            b(TYPE(), l, tokenSymbols);
+                        } else if (v == CHAR().v) {
+                            b(CHAR(), l, tokenSymbols);
+                        } else if (v == INTEGER().v) {
+                            b(INTEGER(), l, tokenSymbols);
+                        } else if (v == ARRAY().v) {
+                            b(ARRAY(), l, tokenSymbols);
+                        } else if (v == OF().v) {
+                            b(OF(), l, tokenSymbols);
+                        } else if (v == RECORD().v) {
+                            b(RECORD(), l, tokenSymbols);
+                        } else if (v == END().v) {
+                            b(END(), l, tokenSymbols);
+                        } else if (v == VAR().v) {
+                            b(VAR(), l, tokenSymbols);
+                        } else if (v == BEGIN().v) {
+                            b(BEGIN(), l, tokenSymbols);
+                        } else if (v == IF().v) {
+                            b(IF(), l, tokenSymbols);
+                        } else if (v == THEN().v) {
+                            b(THEN(), l, tokenSymbols);
+                        } else if (v == ELSE().v) {
+                            b(ELSE(), l, tokenSymbols);
+                        } else if (v == FI().v) {
+                            b(FI(), l, tokenSymbols);
+                        } else if (v == WHILE().v) {
+                            b(WHILE(), l, tokenSymbols);
+                        } else if (v == DO().v) {
+                            b(DO(), l, tokenSymbols);
+                        } else if (v == ENDWH().v) {
+                            b(ENDWH(), l, tokenSymbols);
+                        } else if (v == READ().v) {
+                            b(READ(), l, tokenSymbols);
+                        } else if (v == WRITE().v) {
+                            b(WRITE(), l, tokenSymbols);
+                        } else if (v == RETURN().v) {
+                            b(RETURN(), l, tokenSymbols);
                         } else {
                             // 不是关键字 不转换成大写
                             b(Symbol("ID", true, w.v), l, tokenSymbols);
@@ -912,6 +911,6 @@ namespace ____NamespaceSnlGrammarAnalyser {
 
 }
 
-using ____NamespaceSnlGrammarAnalyser::SnlGrammarAnalyser;
+using snl::SnlGrammarAnalyser;
 
 #endif //SNL_SNLGRAMMARANALYSER_H
